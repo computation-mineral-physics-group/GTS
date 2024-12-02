@@ -1,0 +1,305 @@
+#!/usr/bin/env python
+
+# Author:
+# Dr. Kun Yin (Email: yinkun [at] cdut.edu.cn)
+
+# Description:
+# Derivation of melting curve from Gibbs thermodynamic surface for davemaoite.
+
+# How to run:
+# Execute ./GTSG in the terminal.
+
+# Requirement:
+# Python3 (with numpy, scipy, matplotlib packages installed)
+
+# Input:
+# solid_input.txt, liquid_input.txt
+# The above two files contain volume (given by lattice ratio
+# with respect to a given basis), pressure, energy and temperature data
+# which are computed from NVT-ensemble FPMD simulations for solid phase
+# and liquid phase, respectively.
+
+# Output:
+# kechin_fit_params_with_units.txt
+# Parameters of Kechin equation after fitting are given in this file.
+# kechin_fit.pdf
+# A figure shows the fitted melting curve in pressure-temperature diagram.
+
+import os
+import shutil
+import warnings
+import argparse
+from gibbs_surf import *
+from gibbs_thermo_surface_01 import surface_01
+from gibbs_thermo_surface_02 import fit_linear_functions
+from gibbs_thermo_surface_03 import surface_03
+from gibbs_thermo_surface_04 import entropy_calibration
+from gibbs_thermo_surface_05 import generate_derived_surface
+from gibbs_thermo_surface_06 import contour_line
+from gibbs_thermo_surface_07 import get_melting_data
+from gibbs_thermo_surface_08 import *
+from save_json import save_json
+
+warnings.filterwarnings('ignore')
+
+
+def print_banner():
+    print(
+        '''
+**************************************
+  GTS: Gibbs Thermodynamic Surface
+       _____   _______    _____ 
+      / ____| |__   __|  / ____|
+     | |  __     | |    | (___  
+     | | |_ |    | |     \___ \ 
+     | |__| |    | |     ____) |
+      \_____|    |_|    |_____/                       
+           1.0.0 version
+**************************************
+        >>>READY TO RUN<<<
+'''
+    )
+
+# to check the version of current package
+class VersionAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(">>>Current version of GTS is 1.0.0<<<")
+        sys.exit(0)
+
+
+# step Ⅰ: Build Gibbs thermodynamic surface and store its data in [name].json
+
+def prepare_directory(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    else:
+        raise FileExistsError(f"[Error] You already have an old folder, remove it first: {path}")
+
+
+def cleanup_directories(directories):
+    for directory in directories:
+        shutil.rmtree(directory)
+
+
+def convert_units(level_str_pressure, substance_name):
+    if args.unit == 'vasp':
+        print_vasp_type(f'cross_point_{level_str_pressure}.txt', substance_name)
+    else:
+        print_internal(f'cross_point_{level_str_pressure}.txt', substance_name)
+
+
+def step1_generate_surface(substance_name, temperature_melting_reference, pressure_melting_reference):
+    print(
+        '''
+--------------------------------------
+    '''
+    )
+
+    print('Reading NVT data from inputs...', end='')
+    temp_melting_refer = float(temperature_melting_reference)
+    pressure_melting_refer = float(pressure_melting_reference)  # the melting point from reference
+
+    nV = 100
+    nT = 100  # the grid
+
+    print('done\n'
+          '''
+--------------------------------------
+    '''
+          )
+
+    # Solid phase
+    print('Building primitive surface of solid phase...', end='')
+
+    phase1 = 'solid'  # the first phase is solid
+    solid_dir = f'{substance_name}_{phase1}'
+    top1 = os.getcwd()  # get the current working directory
+
+    prepare_directory(solid_dir)  # check if the phase directory exists or create the phase directory
+
+    os.chdir(solid_dir)  # change the dir to the 'solid'
+    shutil.copy(os.path.join(top1, f'{substance_name}_{phase1}_input.txt'),
+                'input.txt')  # paste the data here for preparation
+    surface_01()  # convert units and get the data prepared
+    fit_linear_functions()  # fit the function of T-U T-P
+    with open('ref_index.txt', 'w') as f:
+        f.write('0\n')
+    with open('refS.txt', 'w') as f:
+        f.write('0.\n')
+    shutil.copy('mid_T.txt', 'refT.txt')
+    surface_03()  # To get the coefficient 'c' and U(S)
+    os.chdir(top1)  # Back to current working directory.
+
+    print('done\n'
+          '''
+--------------------------------------
+    '''
+          )
+
+    # Liquid phase
+    print('Building primitive surface of liquid phase...', end='')
+
+    phase2 = 'liquid'
+    liquid_dir = f'{substance_name}_{phase2}'
+    top2 = os.getcwd()
+
+    prepare_directory(liquid_dir)
+
+    os.chdir(liquid_dir)
+    shutil.copy(os.path.join(top2, f'{substance_name}_{phase2}_input.txt'), 'input.txt')
+    surface_01()
+    fit_linear_functions()
+    with open('ref_index.txt', 'w') as f:
+        f.write('0\n')
+    with open('refS.txt', 'w') as f:
+        f.write('0.\n')
+    shutil.copy('mid_T.txt', 'refT.txt')
+    surface_03()
+    os.chdir(top2)
+
+    print('done\n'
+          '''
+--------------------------------------
+    '''
+          )
+
+    # Two phase preparation
+    print('Building derived surface for two phases...', end='')
+
+    top3 = os.getcwd()
+    casedir = os.path.join(top3, 'twophase')
+
+    prepare_directory(casedir)
+
+    againdir = os.path.join(casedir, 'liquid_again')
+
+    os.chdir(casedir)
+
+    shutil.copy(os.path.join(top3, f'{substance_name}_{phase1}/dat_abc.txt'), 'solid_dat_abc.txt')
+    shutil.copy(os.path.join(top3, f'{substance_name}_{phase1}/dat_eos.txt'), 'solid_dat_eos.txt')
+    shutil.copy(os.path.join(top3, f'{substance_name}_{phase2}/dat_abc.txt'), 'liquid_dat_abc.txt')
+    shutil.copy(os.path.join(top3, f'{substance_name}_{phase2}/dat_eos.txt'), 'liquid_dat_eos.txt')
+
+    entropy_calibration(temp_melting_refer, pressure_melting_refer)
+
+    shutil.copytree(os.path.join(top3, f'{substance_name}_{phase2}'), againdir)
+    shutil.copy('liquid_delta_S.txt', os.path.join(againdir, 'refS.txt'))
+    os.chdir(againdir)
+    surface_03()  # Get the coefficient 'c' of liquid phase after entropy calibration.
+
+    os.chdir(casedir)
+    shutil.copy(os.path.join(againdir, 'dat_abc.txt'), 'liquid_dat_abc.txt')
+    shutil.copy(os.path.join(againdir, 'dat_eos.txt'), 'liquid_dat_eos.txt')
+
+    shutil.copy(os.path.join(top1, f'{substance_name}_solid_input.txt'), 'solid_input.txt')
+    shutil.copy(os.path.join(top1, f'{substance_name}_liquid_input.txt'), 'liquid_input.txt')
+
+    generate_derived_surface(phase1, nV, nT)
+    generate_derived_surface(phase2, nV, nT)
+
+    save_json(substance_name, phase1, phase2)
+
+    shutil.copy(os.path.join(casedir, f'{substance_name}.json'), top3)
+
+    os.chdir(top3)
+
+    # debug = False
+    # if not debug:
+    if not args.debug:
+        cleanup_directories([solid_dir, liquid_dir, casedir])
+
+    print('done\n'
+          '''
+--------------------------------------
+        '''
+          )
+
+
+def step2_get_melting_data(substance_name, pressure):
+    print(
+        '''
+--------------------------------------
+    '''
+    )
+    print('Obtaining the melting pressure...', end='')
+    output = f'{substance_name}_melting_data'
+    level_str_pressure = f"{float(pressure):.3f}"
+    top4 = os.getcwd()
+    prepare_directory(output)
+    casedir = os.path.join(top4, output)
+    os.chdir(casedir)
+    shutil.copy(os.path.join(top4, f'{substance_name}.json'), casedir)
+    contour_line(pressure, substance_name)
+    get_melting_data(pressure, substance_name)
+
+    print('done\n'
+          '''
+--------------------------------------
+    '''
+          )
+
+    print(f"material_name {'=':>7} {substance_name} ")
+
+    convert_units(level_str_pressure, substance_name)
+
+    # save G-T plot
+    if args.unit == 'vasp':
+        if args.image:
+            shutil.copy(os.path.join(casedir, f'{substance_name}_pressure_{level_str_pressure}_vasp.pdf'),
+                        os.path.join(top4, f'{substance_name}_pressure_{level_str_pressure}.pdf'))
+            print(f'Image saved at {top4}')
+    else:
+        if args.image:
+            shutil.copy(os.path.join(casedir, f'{substance_name}_pressure_{level_str_pressure}_internal.pdf'),
+                        os.path.join(top4, f'{substance_name}_pressure_{level_str_pressure}.pdf'))
+            print(f'Image saved at {top4}')
+
+    os.chdir(top4)
+
+    # debug = False
+    # if not debug:
+    if not args.debug:
+        cleanup_directories([output])
+
+    print(
+          '''
+--------------------------------------
+    '''
+          )
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="A program to build Gibbs thermodynamic surface and obtain melting data of material")
+    parser.add_argument("-n", "--name", type=str, help="the substance which you want to obtain melting data", dest='n')
+    parser.add_argument("-s", "--surface", action="store_true",
+                        help="Build Gibbs thermodynamic surface and store its data in [name].json.")
+    parser.add_argument("-tmr", "--temp_melting_refer", type=float, default=0,
+                        help="This is melting temperature of reference point. The unit is K.", dest='t')
+    parser.add_argument("-pmr", "--pressure_melting_refer", type=float, default=0,
+                        help="This is melting pressure of reference point. The unit is GPa.", dest='p')
+    parser.add_argument("-p", "--pressure", type=float, default=0,
+                        help="This is the pressure of objective melting that you want. The unit is GPa.", dest='pm')
+    parser.add_argument("-i", "--image", action="store_true",
+                        help="Save the G-T plot which indicates the objective melting point.")
+    parser.add_argument("-u", "--unit", type=str, default="internal", required=False,
+                        help="Convert units from internal to user defined standard.")
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode.")
+    parser.add_argument("-v", "--version", action=VersionAction, nargs=0, help="Show the program's version and exit.")
+
+    global args
+    args = parser.parse_args()
+
+    if args.debug:
+        print("Debug mode is enabled")
+
+    if args.n:
+        if args.surface:
+            step1_generate_surface(args.n, args.t, args.p)
+        if args.pm:
+            step2_get_melting_data(args.n, args.pm)
+
+
+if __name__ == "__main__":
+    print_banner()
+    main()
