@@ -1,29 +1,12 @@
 #!/usr/bin/env python
 
 # Author:
-# Dr. Kun Yin (Email: yinkun [at] cdut.edu.cn)
+# Kun Yin (Email: yinkun@cdut.edu.cn)
+# Xuan Zhao
 
-# Description:
-# Derivation of melting curve from Gibbs thermodynamic surface for davemaoite.
+# Description: An automated toolkit that efficiently obtains high-pressure melting data, including melting points and
+# thermodynamic potentials of materials, by constructing the Gibbs thermodynamic surface using a geometrical method.
 
-# How to run:
-# Execute ./GTSG in the terminal.
-
-# Requirement:
-# Python3 (with numpy, scipy, matplotlib packages installed)
-
-# Input:
-# solid_input.txt, liquid_input.txt
-# The above two files contain volume (given by lattice ratio
-# with respect to a given basis), pressure, energy and temperature data
-# which are computed from NVT-ensemble FPMD simulations for solid phase
-# and liquid phase, respectively.
-
-# Output:
-# kechin_fit_params_with_units.txt
-# Parameters of Kechin equation after fitting are given in this file.
-# kechin_fit.pdf
-# A figure shows the fitted melting curve in pressure-temperature diagram.
 
 import os
 import shutil
@@ -60,14 +43,13 @@ def print_banner():
 '''
     )
 
+
 # to check the version of current package
 class VersionAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         print(">>>Current version of GTS is 1.0.0<<<")
         sys.exit(0)
 
-
-# step Ⅰ: Build Gibbs thermodynamic surface and store its data in [name].json
 
 def prepare_directory(path):
     if not os.path.exists(path):
@@ -88,6 +70,7 @@ def convert_units(level_str_pressure, substance_name):
         print_internal(f'cross_point_{level_str_pressure}.txt', substance_name)
 
 
+# step Ⅰ: Build Gibbs thermodynamic surface and store its data in [name].json
 def step1_generate_surface(substance_name, temperature_melting_reference, pressure_melting_reference):
     print(
         '''
@@ -203,8 +186,6 @@ def step1_generate_surface(substance_name, temperature_melting_reference, pressu
 
     os.chdir(top3)
 
-    # debug = False
-    # if not debug:
     if not args.debug:
         cleanup_directories([solid_dir, liquid_dir, casedir])
 
@@ -221,7 +202,7 @@ def step2_get_melting_data(substance_name, pressure):
 --------------------------------------
     '''
     )
-    print('Obtaining the melting pressure...', end='')
+    print('Obtaining the melting data...', end='')
     output = f'{substance_name}_melting_data'
     level_str_pressure = f"{float(pressure):.3f}"
     top4 = os.getcwd()
@@ -256,16 +237,14 @@ def step2_get_melting_data(substance_name, pressure):
 
     os.chdir(top4)
 
-    # debug = False
-    # if not debug:
     if not args.debug:
         cleanup_directories([output])
 
     print(
-          '''
+        '''
 --------------------------------------
     '''
-          )
+    )
 
 
 def main():
@@ -274,9 +253,9 @@ def main():
     parser.add_argument("-n", "--name", type=str, help="the substance which you want to obtain melting data", dest='n')
     parser.add_argument("-s", "--surface", action="store_true",
                         help="Build Gibbs thermodynamic surface and store its data in [name].json.")
-    parser.add_argument("-tmr", "--temp_melting_refer", type=float, default=0,
+    parser.add_argument("-mtr", "--melt_temp_refer", type=float, default=0,
                         help="This is melting temperature of reference point. The unit is K.", dest='t')
-    parser.add_argument("-pmr", "--pressure_melting_refer", type=float, default=0,
+    parser.add_argument("-mpr", "--melt_pressure_refer", type=float, default=0,
                         help="This is melting pressure of reference point. The unit is GPa.", dest='p')
     parser.add_argument("-p", "--pressure", type=float, default=0,
                         help="This is the pressure of objective melting that you want. The unit is GPa.", dest='pm')

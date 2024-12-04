@@ -1,7 +1,7 @@
 """
   GTS -- Gibbs Thermodynamic Surface: an automated toolkit to obtain high-pressure melting data
 
-  Copyright (C) 2019-2019 by Zhong-Li Liu
+  Copyright (C) 2024-2024 by Kun Yin and Xuan Zhao
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
