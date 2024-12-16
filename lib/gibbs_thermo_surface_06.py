@@ -71,7 +71,6 @@ def save_contour_lines(phase, level, dictionary):
 
         with open(file_name, 'w') as f:
             for j in range(vert.shape[0]):
-                # f.write(f"{vert[j, 0]:.6f} {vert[j, 1]:.6f}\n")
                 f.write(f"{vert[j, 0]} {vert[j, 1]}\n")
     except Exception as e:
         print(f"An error occurred while saving contour lines for {phase}: {e}", file=sys.stderr)

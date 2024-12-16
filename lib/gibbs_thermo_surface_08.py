@@ -45,8 +45,6 @@ def print_internal(data, name):
 
         print(f"melting_pressure {'=':>4} {pressure_melting:.3f} GPa")
         print(f"melting_temperature {'=':>1} {temp_melting * 1.0e+3:.1f} K")
-        # print(f"##{properties[0]}:{units[0]}, {properties[1]}:{units[1]}, {properties[2]}:{units[2]}##\n"
-        #       f"##{properties[3]}:{units[3]}, {properties[4]}:{units[4]}, {properties[5]}:{units[5]}##")
         print(f"{'####':^6} {'#solid#':^9}{'#liquid#':^10}{'#units#':^16}")
 
         # start to print thermodynamic potential
@@ -108,8 +106,6 @@ def print_vasp_type(data, name):
 
         print(f"melting_pressure {'=':>4} {pressure_melting:.3f} GPa")
         print(f"melting_temperature {'=':>1} {temp_melting * 1.0e+3:.1f} K")
-        # print(f"##{properties[0]}:{units[0]}, {properties[1]}:{units[1]}, {properties[2]}:{units[2]}##\n"
-        #       f"##{properties[3]}:{units[3]}, {properties[4]}:{units[4]}, {properties[5]}:{units[5]}##")
         print(f"{'####':^6} {'#solid#':^9}{'#liquid#':^10}{'#units#':^16}")
 
         # start to print thermodynamic potential
