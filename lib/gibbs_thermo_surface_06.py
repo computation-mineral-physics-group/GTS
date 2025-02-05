@@ -43,8 +43,8 @@ def generate_TGP(phase_type, dictionary):
     Z = dat[:, 2]  # Pressure
 
     # Interpolating data
-    xi = np.linspace(X.min(), X.max(), 100)
-    yi = np.linspace(Y.min(), Y.max(), 100)
+    xi = np.linspace(X.min(), X.max(), 60)
+    yi = np.linspace(Y.min(), Y.max(), 60)
     zi = griddata((X, Y), Z, (xi[None, :], yi[:, None]), method='cubic')
     xig, yig = np.meshgrid(xi, yi)
 
