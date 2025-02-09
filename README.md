@@ -27,7 +27,7 @@ Installing GTS in a Python 3 environment is straightforward. We recommend two wa
 
 You can install GTS directly from PyPI:
       ```
-      pip install GTS
+      pip install GibbsTS
       ```
 
 ### From Source
