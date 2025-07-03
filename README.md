@@ -34,7 +34,7 @@ You can install GTS directly from PyPI:
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/XuanZhao-study/GTS.git
+    git clone https://github.com/computation-mineral-physics-group/GTS.git
     cd GTS
     ```
 
@@ -62,17 +62,20 @@ It is of great importance to prepare two files before running: `{name}_solid_inp
 
 ### Command For Running
 
-| Argument                         | Type    | Default         | Description                                                                |
-|----------------------------------|---------|-----------------|----------------------------------------------------------------------------|
-| `-n, --name`                     | `str`   | None            | The name of the material for which you want to obtain melting data.        |
-| `-s, --surface`                  | `bool`  | `False`         | Build the Gibbs thermodynamic surface and store its data in `[name].json`. |
-| `-tmr, --temp_melting_refer`     | `float` | `0`             | The reference melting temperature (unit: K).                               |
-| `-pmr, --pressure_melting_refer` | `float` | `0`             | The reference melting pressure (unit: GPa).                                |
-| `-p, --pressure`                 | `float` | `0`             | The target pressure for melting point calculation (unit: GPa).             |
-| `-i, --image`                    | `bool`  | `False`         | Save the G-T plot indicating the melting point.                            |
-| `-u, --unit`                     | `str`   | `internal`      | Units defined by the user. (e.g., `vasp` or `internal`).                   |
-| `-d, --debug`                    | `bool`  | `False`         | Enable debug mode.                                                         |
-| `-v, --version`                  | `flag`  | `VersionAction` | Show the program's version.                                                |
+| Argument                        | Type    | Default         | Description                                                                |
+|---------------------------------|---------|-----------------|----------------------------------------------------------------------------|
+| `-n, --name`                    | `str`   | None            | The name of the material for which you want to obtain melting data.        |
+| `-s, --surface`                 | `bool`  | `False`         | Build the Gibbs thermodynamic surface and store its data in `[name].json`. |
+| `-mtr, --melt_temp_refer`       | `float` | `0`             | The reference melting temperature (unit: K).                               |
+| `-mpr, --melt_pressure_refer`   | `float` | `0`             | The reference melting pressure (unit: GPa).                                |
+| `-p, --pressure`                | `float` | `0`             | The target pressure for melting point calculation (unit: GPa).             |
+| `-i, --image`                   | `bool`  | `False`         | Save the G-T plot indicating the melting point.                            |
+| `-u, --unit`                    | `str`   | `internal`      | Units defined by the user. (e.g., `vasp` or `internal`).                   |
+| `-min, --minpressure`           | `float` | `0`             | Lower limit of the pressure range (in GPa).                                |                                          |
+| `-max, --maxpressure`           | `float` | `0`             | Upper limit of the pressure range (in GPa).                                |
+| `-num, --number`                | `float` | `6`             | Number of melting points to compute over the pressure range.               |
+| `-d, --debug`                   | `bool`  | `False`         | Enable debug mode.                                                         |
+| `-v, --version`                 | `flag`  | `VersionAction` | Show the program's version.                                                |
 
 ---
 
@@ -86,16 +89,21 @@ GTS -n [name] -s -mtr [value] -mpr [value]
 ```
 
 ### 2. Obtain Melting Data
-This command will output the user-defined melting point and its thermodynamic potentials for the two phases (solid phase and liquid phase) in the terminal.
+This command will output melting point at the user-defined pressure and its thermodynamic potentials for the two phases (solid phase and liquid phase) in the terminal.
 
 ```bash
 GTS -n [name] -p [value] -u [type] -i
 ```
+This command will output the diagrams of thermodynamic potentials over the user-defined pressure range.
+
+```bash
+GTS -n [name] -min [value] -max [value]
+```
 
 ### 3. Debug Model
-In step 1, GTS retains the original data for building primitive surfaces in two directories: `{name}_solid` and `{name}_liquid`. After entropy calibration, derived surface data is stored in `twophase`.
+In step Ⅰ, GTS retains the original data for building primitive surfaces in two directories: `{name}_solid` and `{name}_liquid`. After entropy calibration, derived surface data is stored in `twophase`.
 
-In step 2, the fitting data of the G-T plot is kept in the directory: `{name}_melting_data`, during obtaining melting data.
+In step Ⅱ, for a single user-defined pressure value, the fitting data is kept in the directory: `{name}_{pressure_value}_melting_data`, during obtaining melting data. For a user-defined pressure range, the fitting data is kept in the directory: `{name}_{min}_{max}_melting_data`.
 
 ---
 

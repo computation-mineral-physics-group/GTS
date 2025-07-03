@@ -1,7 +1,7 @@
 """
   GTS -- Gibbs Thermodynamic Surface: an automated toolkit to obtain high-pressure melting data
 
-  Copyright (C) 2024-2024 by Kun Yin and Xuan Zhao
+  Copyright (C) 2024-2025 by Kun Yin and Xuan Zhao
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -108,7 +108,7 @@ def print_vasp_type(data, name):
         print(f"melting_temperature {'=':>1} {temp_melting * 1.0e+3:.1f} K")
         print(f"{'####':^6} {'#solid#':^9}{'#liquid#':^10}{'#units#':^16}")
 
-        # start to print thermodynamic potential
+        # start to print thermodynamic potentials
         with open('%s' % str(name) + '.json', 'r') as jsonfile:
             material = json.load(jsonfile)
         [V, S, p, T, U, A, H, G] = potential_G(temp_melting, pressure_melting * 1.0e-1, np.array(material['solid']['abc']),

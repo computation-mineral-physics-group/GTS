@@ -1,7 +1,7 @@
 """
   GTS -- Gibbs Thermodynamic Surface: an automated toolkit to obtain high-pressure melting data
 
-  Copyright (C) 2024-2024 by Kun Yin and Xuan Zhao
+  Copyright (C) 2024-2025 by Kun Yin and Xuan Zhao
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -72,7 +72,7 @@ def get_cross_point(level_str, cp, x_label, y_label, y_label_vasp, n):
         root = fsolve(f, guess)
         temperature = root[0]
         gibbsenergy = 0.5 * (np.polyval(Ga, temperature) + np.polyval(Gb, temperature))
-        cp.write(f"{level_str} {temperature:.3f}\n")
+        cp.write(f"{level_str} {temperature:.6f}\n")
 
         plt.plot(temperature, gibbsenergy, 'bo', label='Melting point', zorder=5)
         plt.plot(xs, ys_solid, 'r-', label='Solid fit')
@@ -129,3 +129,25 @@ def get_melting_data(p, n):
     except Exception as e:
         print(f"An error occurred while getting the melting data: {e}", file=sys.stderr)
 
+def get_melting_data_pressure_range(p, n, write_header=False):
+    """
+    Generate and save melting data for given pressure.
+    Write the temperature and pressure of each point from pressure range.
+
+    Parameters:
+    p (float): The pressure level.
+    n (str): The filename prefix for the input JSON file.
+    """
+    try:
+        level = float(p) * 1.0e-1  # GPa ==> Pa*1e+10
+        level_str_c = f"{float(p):.3f}"
+        x_label = r'Temperature ($\times 10^{3}$ K)'
+        y_label = r'Gibbs free energy ($\times 10^{-19}$ J/atom)'
+        y_label_vasp = r'Gibbs free energy (eV/atom)'
+
+        with open(f'cross_point_{n}.txt', 'a') as cp:
+            if write_header:
+                cp.write("# P(* GPa), T(*1e+3 K)\n")
+            get_cross_point(level_str_c, cp, x_label, y_label, y_label_vasp, n)
+    except Exception as e:
+        print(f"An error occurred while getting the melting data: {e}", file=sys.stderr)

@@ -1,7 +1,7 @@
 """
   GTS -- Gibbs Thermodynamic Surface: an automated toolkit to obtain high-pressure melting data
 
-  Copyright (C) 2024-2024 by Kun Yin and Xuan Zhao
+  Copyright (C) 2024-2025 by Kun Yin and Xuan Zhao
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -62,7 +62,12 @@ def save_contour_lines(phase, level, dictionary):
     """
     try:
         xig, yig, zi = generate_TGP(phase, dictionary)
-        cset = plt.contour(xig, yig, zi, [level])
+
+        fig, ax = plt.subplots()
+        cset = ax.contour(xig, yig, zi, [level])
+        plt.close(fig)
+
+        # cset = plt.contour(xig, yig, zi, [level])
         level_value_str = f"{level * 10 :.3f}"
         file_name = f"{phase}_pressure_{level_value_str}.txt"
 

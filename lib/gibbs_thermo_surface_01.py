@@ -1,7 +1,7 @@
 """
   GTS -- Gibbs Thermodynamic Surface: an automated toolkit to obtain high-pressure melting data
 
-  Copyright (C) 2024-2024 by Kun Yin and Xuan Zhao
+  Copyright (C) 2024-2025 by Kun Yin and Xuan Zhao
 
   This program is free software; you can redistribute it and/or modify it under the
   terms of the GNU General Public License as published by the Free Software Foundation
@@ -33,11 +33,14 @@ def read_data(input_file):
 
 def write_mid_temperature(dat):
     """Calculate and write the middle temperature to mid_T.txt."""
-    mid_T = np.mean(dat[:, 3]) * K_tO_internal_T
+    # mid_T = np.mean(dat[:, 3]) * K_tO_internal_T
+    max_T = max(dat[:, 3])
+    min_T = min(dat[:, 3])
+    mid_T = (max_T + min_T) * 0.5 * 1e-3
 
     with open('mid_T.txt', 'w') as middle_T:
-        middle_T.write(f"{mid_T:.{precision}f}\n")
-
+        # middle_T.write(f"{mid_T:.{precision}f}\n")
+        middle_T.write(f"{mid_T:.3f}\n")
 
 def write_volumes(unique_volumes):
     """Write unique volumes to V.txt."""

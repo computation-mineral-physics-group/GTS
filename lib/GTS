@@ -19,8 +19,9 @@ from gibbs_thermo_surface_03 import surface_03
 from gibbs_thermo_surface_04 import entropy_calibration
 from gibbs_thermo_surface_05 import generate_derived_surface
 from gibbs_thermo_surface_06 import contour_line
-from gibbs_thermo_surface_07 import get_melting_data
+from gibbs_thermo_surface_07 import get_melting_data, get_melting_data_pressure_range
 from gibbs_thermo_surface_08 import *
+from gibbs_thermo_surface_09 import plot_for_pressure_range
 from save_json import save_json
 
 warnings.filterwarnings('ignore')
@@ -37,7 +38,7 @@ def print_banner():
      | | |_ |    | |     \___ \ 
      | |__| |    | |     ____) |
       \_____|    |_|    |_____/                       
-           1.0.0 version
+           1.0.4 version
 **************************************
         >>>READY TO RUN<<<
 '''
@@ -47,7 +48,7 @@ def print_banner():
 # to check the version of current package
 class VersionAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        print(">>>Current version of GTS is 1.0.0<<<")
+        print(">>>Current version of GTS is 1.0.4<<<")
         sys.exit(0)
 
 
@@ -78,7 +79,7 @@ def step1_generate_surface(substance_name, temperature_melting_reference, pressu
     '''
     )
 
-    print('Reading NVT data from inputs...', end='')
+    print('Reading NVT data from inputs...', end='', flush=True)
     temp_melting_refer = float(temperature_melting_reference)
     pressure_melting_refer = float(pressure_melting_reference)  # the melting point from reference
 
@@ -92,7 +93,7 @@ def step1_generate_surface(substance_name, temperature_melting_reference, pressu
           )
 
     # Solid phase
-    print('Building primitive surface of solid phase...', end='')
+    print('Building primitive surface of solid phase...', end='', flush=True)
 
     phase1 = 'solid'  # the first phase is solid
     solid_dir = f'{substance_name}_{phase1}'
@@ -120,7 +121,7 @@ def step1_generate_surface(substance_name, temperature_melting_reference, pressu
           )
 
     # Liquid phase
-    print('Building primitive surface of liquid phase...', end='')
+    print('Building primitive surface of liquid phase...', end='', flush=True)
 
     phase2 = 'liquid'
     liquid_dir = f'{substance_name}_{phase2}'
@@ -147,7 +148,7 @@ def step1_generate_surface(substance_name, temperature_melting_reference, pressu
           )
 
     # Two phase preparation
-    print('Building derived surface for two phases...', end='')
+    print('Building derived surface for two phases...', end='', flush=True)
 
     top3 = os.getcwd()
     casedir = os.path.join(top3, 'twophase')
@@ -202,8 +203,8 @@ def step2_get_melting_data(substance_name, pressure):
 --------------------------------------
     '''
     )
-    print('Obtaining the melting data...', end='')
-    output = f'{substance_name}_melting_data'
+    print('Obtaining the melting data...', end='', flush=True)
+    output = f'{substance_name}_{pressure}_melting_data'
     level_str_pressure = f"{float(pressure):.3f}"
     top4 = os.getcwd()
     prepare_directory(output)
@@ -246,6 +247,54 @@ def step2_get_melting_data(substance_name, pressure):
     '''
     )
 
+def step2_get_melting_data_range(substance_name, lowerlimit, upperlimit, points_num):
+    print(
+        '''
+--------------------------------------
+    '''
+    )
+    print('Obtaining melting points over the specified pressure range...', end='', flush=True)
+    pn = int(points_num)
+    pressure_range = np.linspace(lowerlimit, upperlimit, pn)
+    output = f'{substance_name}_{lowerlimit}_{upperlimit}_melting_data'
+    top5 = os.getcwd()
+    prepare_directory(output)
+    casedir = os.path.join(top5, output)
+    os.chdir(casedir)
+    shutil.copy(os.path.join(top5, f'{substance_name}.json'), casedir)
+
+    for each_pressure in pressure_range:
+        contour_line(each_pressure, substance_name)
+        get_melting_data_pressure_range(each_pressure, substance_name)
+
+    print('done\n'
+          '''
+--------------------------------------
+    '''
+          )
+
+    print('Generating the plot of melting data over the pressure range...', end='', flush=True)
+
+    plot_for_pressure_range(substance_name, lowerlimit, upperlimit)
+
+    try:
+        shutil.copy(os.path.join(casedir, f'{substance_name}_{lowerlimit}_{upperlimit}_melting_data.pdf'),
+                os.path.join(top5, f'{substance_name}_{lowerlimit}_{upperlimit}_melting_data.pdf'))
+    except Exception as e:
+        print(f"An error occurred while saving the plot: {e}", file=sys.stderr)
+
+    os.chdir(top5)
+
+    if not args.debug:
+        cleanup_directories([output])
+
+
+    print('done\n'
+          '''
+--------------------------------------
+    '''
+          )
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -254,17 +303,27 @@ def main():
     parser.add_argument("-s", "--surface", action="store_true",
                         help="Build Gibbs thermodynamic surface and store its data in [name].json.")
     parser.add_argument("-mtr", "--melt_temp_refer", type=float, default=0,
-                        help="This is melting temperature of reference point. The unit is K.", dest='t')
+                        help="Melting temperature of the reference point (in K).", dest='t')
     parser.add_argument("-mpr", "--melt_pressure_refer", type=float, default=0,
-                        help="This is melting pressure of reference point. The unit is GPa.", dest='p')
+                        help="Melting pressure of the reference point (in GPa).", dest='p')
     parser.add_argument("-p", "--pressure", type=float, default=0,
-                        help="This is the pressure of objective melting that you want. The unit is GPa.", dest='pm')
+                        help="Target pressure for computing the objective melting point (in GPa).", dest='pm')
     parser.add_argument("-i", "--image", action="store_true",
                         help="Save the G-T plot which indicates the objective melting point.")
     parser.add_argument("-u", "--unit", type=str, default="internal", required=False,
-                        help="Convert units from internal to user defined standard.")
+                        help="Convert units from internal to user defined standard('vasp' or 'internal').")
+    parser.add_argument("-min", "--minprssure", type=float, default=0,
+                        help="Lower limit of the pressure range (in GPa).", dest='lower_limit')
+    parser.add_argument("-max", "--maxpressure", type=float, default=0,
+                        help="Upper limit of the pressure range (in GPa).", dest='upper_limit')
+    parser.add_argument("-num", "--number", type=float, default=6,
+                        help="Number of melting points to compute over the pressure range. Default is 6.", required=False, dest='points_num')
+
+
+
+
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode.")
-    parser.add_argument("-v", "--version", action=VersionAction, nargs=0, help="Show the program's version and exit.")
+    parser.add_argument("-v", "--version", action=VersionAction, nargs=0, help="Show program version and exit.")
 
     global args
     args = parser.parse_args()
@@ -277,6 +336,8 @@ def main():
             step1_generate_surface(args.n, args.t, args.p)
         if args.pm:
             step2_get_melting_data(args.n, args.pm)
+        if args.lower_limit:
+            step2_get_melting_data_range(args.n, args.lower_limit, args.upper_limit, args.points_num)
 
 
 if __name__ == "__main__":

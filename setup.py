@@ -22,7 +22,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md'), encoding='utf-8'
 
 setup(
     name="GibbsTS",
-    version="1.0.0",
+    version="1.0.4",
     description="GTS: An automated toolkit for building Gibbs thermodynamic surface with application to obtain "
                 "high-pressure melting data.",
     long_description=long_description,
@@ -34,9 +34,9 @@ setup(
     package_dir={'': 'lib'},
     py_modules=["gibbs_thermo_surface_01", "gibbs_thermo_surface_02", "gibbs_thermo_surface_03",
                 "gibbs_thermo_surface_04", "gibbs_thermo_surface_05", "gibbs_thermo_surface_06",
-                "gibbs_thermo_surface_07", "gibbs_thermo_surface_08", "gibbs_surf", "save_json"],
+                "gibbs_thermo_surface_07", "gibbs_thermo_surface_08", "gibbs_thermo_surface_09", "gibbs_surf", "save_json"],
     scripts=["lib/GTS"],
-    python_requires='>=3.11.4',
+    python_requires='>=3.11',
     install_requires=[
         'numpy>=1.24.3',
         'scipy>=1.10.1',
@@ -51,3 +51,4 @@ setup(
     ],
 
 )
+
