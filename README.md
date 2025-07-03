@@ -1,6 +1,6 @@
 # GTS: Gibbs Thermodynamic Surface
 
-![version](https://img.shields.io/badge/version-1.0.0-blue)
+![version](https://img.shields.io/badge/version-1.0.4-blue)
 ![python](https://img.shields.io/badge/python-3.11.4%2B-brightgreen)
 ![license](https://img.shields.io/badge/license-GPL_3.0-yellow)
 
